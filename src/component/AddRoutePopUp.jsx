@@ -6,68 +6,72 @@
         const token = localStorage.getItem("token");
         const API_URL = import.meta.env.VITE_API_URL;
 
-        const handleSubmit = async (e) => {
-    e.preventDefault();
+     
+const handleSubmit = async (e) => {
+  e.preventDefault();
 
-    console.log("1. Submit started");
-    console.log("Form data:", formData);
-    console.log("Org name:", orgName);
+  if (!token) {
+    toast.error("Session expired. Please log in again.");
+    return;
+  }
 
-    try {
-        console.log("2. Sending route request...");
+  if (!orgName) {
+    toast.error("Organization name is missing.");
+    return;
+  }
 
-        const response = await fetch(
-            `${API_URL}/route/${orgName}`,
-            {
-                method: "POST",
-                headers: {
-                    "Content-Type": "application/json",
-                    Authorization: `Bearer ${token}`,
-                },
-                body: JSON.stringify({
-                    routeNumber: formData.routeNumber,
-                    source: formData.source,
-                    destination: formData.destination,
-                }),
-            }
-        );
+  if (
+    !formData.routeNumber.trim() ||
+    !formData.source.trim() ||
+    !formData.destination.trim()
+  ) {
+    toast.error("Please fill in all route fields.");
+    return;
+  }
 
-        console.log("3. Route response status:", response.status);
+  try {
+    const url =
+      `${API_URL}/route/${encodeURIComponent(orgName)}`;
 
-        const text = await response.text();
+    console.log("Creating route at:", url);
 
-        console.log("4. Backend response:", text);
+    const response = await fetch(url, {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+        Authorization: `Bearer ${token}`,
+      },
+      body: JSON.stringify({
+        routeNumber: formData.routeNumber.trim(),
+        source: formData.source.trim(),
+        destination: formData.destination.trim(),
+      }),
+    });
 
-        if (response.ok) {
-            console.log("5. Route created successfully");
+    const text = await response.text();
 
-            toast.success(text || "Route successfully created");
+    console.log("Route creation status:", response.status);
+    console.log("Route creation response:", text);
 
-            try {
-                console.log("6. Calling refreshRoutes...");
-
-                await refreshRoutes();
-
-                console.log("7. refreshRoutes completed");
-            } catch (refreshError) {
-                console.error("refreshRoutes ERROR:", refreshError);
-            }
-
-            setTimeout(() => {
-                console.log("8. Closing popup");
-                onClose();
-            }, 1500);
-        } else {
-            console.log("Backend returned error");
-
-            toast.error(text || "Failed to create route");
-        }
-
-    } catch (error) {
-        console.error("FETCH ERROR:", error);
-        toast.error("Error in AddRoutePopUp frontend");
+    if (!response.ok) {
+      toast.error(
+        `Unable to add route (${response.status}): ${
+          text || response.statusText
+        }`
+      );
+      return;
     }
+
+    toast.success(text || "Route added successfully");
+
+    await refreshRoutes();
+    onClose();
+  } catch (error) {
+    console.error("Route creation failed:", error);
+    toast.error("Unable to connect to the backend.");
+  }
 };
+
     
 
 
