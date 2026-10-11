@@ -10,28 +10,45 @@ function AdminDashboardPage() {
   const [users, setUsers] = useState([]);
   const navigate=useNavigate();
   const token = localStorage.getItem("token");
-  const fetchUsers = async () => {
-    try {
-      const response = await fetch(`${API_URL}/user`, {
-        method: "GET",
-        headers: {
-          "Content-Type": "application/json",
-          Authorization: `Bearer ${token}`
-        },
-      });
 
-      if (response.status === 200) {
-        const data = await response.json();
-        setUsers(data);
-      } else {
-        const text = await response.text();
-        toast.error(text);
-      }
-    } catch (error) {
-      console.error(error);
-      toast.error("Error fetching users");
+const fetchUsers = async () => {
+  try {
+    if (!token) {
+      toast.error("Please log in again.");
+      navigate("/allLogin");
+      return;
     }
-  };
+
+    const response = await fetch(`${API_URL}/user`, {
+      method: "GET",
+      headers: {
+        Authorization: `Bearer ${token}`,
+      },
+    });
+
+    if (!response.ok) {
+      const message = await response.text();
+
+      if (response.status === 401) {
+        toast.error("Session expired. Please log in again.");
+      } else if (response.status === 403) {
+        toast.error("Access denied. Check admin authorization.");
+      } else {
+        toast.error(`Failed to load users: ${response.status}`);
+      }
+
+      console.error("Fetch users failed:", response.status, message);
+      return;
+    }
+
+    const data = await response.json();
+    setUsers(data);
+  } catch (error) {
+    console.error("Fetch users failed:", error);
+    toast.error("Unable to connect to the backend.");
+  }
+};
+
 
   useEffect(() => {
     fetchUsers();
@@ -114,7 +131,7 @@ return (
       <div className="flex justify-end mb-6 sm:mb-8 lg:mb-10">
         <button
           onClick={() => {
-            localStorage.removeItem(token),
+            localStorage.removeItem("token"),
             toast.success("Admin successfully logged out"),
             navigate("/allLogin")
           }}
