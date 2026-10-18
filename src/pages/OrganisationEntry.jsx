@@ -37,11 +37,11 @@ function OrganisationEntry() {
           </p>
 
           <h1 className="mt-3 text-3xl font-black leading-tight text-slate-900 sm:text-4xl md:text-5xl">
-            Welcome Aboard
+            Welcome 
           </h1>
 
           <p className="mx-auto mt-3 max-w-sm text-sm leading-relaxed text-slate-500 sm:text-base">
-            Enter your organisation name to continue to your SmartBus portal.
+            Enter your organisation name to view buses in your organisation.
           </p>
         </div>
 
